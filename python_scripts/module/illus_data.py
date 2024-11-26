@@ -141,8 +141,4 @@ class Illustris:
                     arr[i + 2, j] = img2
                     arr[i + 3, j] = img3
 
-        val_inp = arr[:, :int(self.band_num - 1)]
-        val_label = arr[:, -1:]
-        del arr
-
-        return val_inp, val_label
+        return arr
