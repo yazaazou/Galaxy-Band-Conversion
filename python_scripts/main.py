@@ -1,73 +1,68 @@
-import sys
 import os
+import sys
 import numpy as np
-import csv
-import h5py as h5
-
 import tensorflow as tf
 from tensorflow import keras
-from keras.models import Model, Sequential
-from keras import layers
-from keras.layers import InputSpec
-from keras.layers import GroupNormalization as GNorm
 
+# Custom imports
+from illus_data import Illustris as get_illus
+from model import Generator, Img2Img, CustomCallback
 
-homeDir= str(os.getcwd())
+# Paths
+home_dir = os.getcwd()
+module_dir = os.path.join(home_dir, 'module')
+os.chdir(module_dir)
 
-moduleDir=  homeDir + '/module'
-os.chdir(moduleDir)
-from illus_data import illustris_data as get_illus
-from model import generator, img2img, CustomCallback
+# Constants
+out_dir = os.path.join(home_dir, 'models')
+img_dir = os.path.join(out_dir, 'imgs')
+data_dir = os.path.join(home_dir, 'data')
 
-
-outDir = homeDir + '/models'
-imgDir= outDir + '/imgs'
-
-# specify data directory
-dataDir= homeDir + '/data'
-
-totalEpochs  =  int(sys.argv[1])
+# Parameters
+total_epochs = int(sys.argv[1])
 bands = list(sys.argv[2:])
 spatial_dim = 128
 crop = 54
-
 suffix = 'initial_commit'
-illus= get_illus(bands,spatial_dim,crop,dataDir)
 
-# load IDS
-os.chdir(dataDir)
-train_ids= np.load('train_ids.npy')
+# Get Illustris data
+illus = get_illus(bands, spatial_dim, crop, data_dir)
 
-train_files= illus.get_files(train_ids)
-train_ds= illus.get_train_data(train_files)
+# Load IDs
+os.chdir(data_dir)
+train_ids = np.load('train_ids.npy')
 
-# Build Model
+train_files = illus.get_files(train_ids)
+train_ds = illus.get_train_data(train_files)
 
-# custom loss function
-def generator_loss_fn(real,fake):
-    ssim = tf.image.ssim
-    ssim_loss= 1 - ssim(real,fake,max_val=1.0)
 
-    mae =  tf.keras.losses.MeanAbsoluteError()
-    mae_loss= mae(real,fake)
+# Custom loss function
+def generator_loss_fn(real, fake):
+    ssim_loss = 1 - tf.image.ssim(real, fake, max_val=1.0)
+    mae_loss = tf.keras.losses.MeanAbsoluteError()(real, fake)
     return ssim_loss + mae_loss
 
-generator_network = generator(filters=[128,256],num_resid=6,
-                              num_inputs=2,skip=False,attention=False
-                              ).get_generator()
 
-model= img2img(generator_network)
+# Build generator model
+generator_network = generator(
+    filters=[128, 256],
+    num_resid=6,
+    num_inputs=2,
+    skip=False,
+    attention=False,
+).get_generator()
+
+model = img2img(generator_network)
 
 model.compile(
     gen_G_optimizer=keras.optimizers.legacy.Adam(learning_rate=2e-4, beta_1=0.5),
     gen_loss_fn=generator_loss_fn,
-    metric=keras.metrics.Mean(name="mean", dtype=None)
-    )
+    metric=keras.metrics.Mean(name="mean", dtype=None),
+)
 
-#save every 8 epochs
-ckpt=8
-call_back=  CustomCallback(model,suffix,outDir,ckpt)
+# Save every 8 epochs
+ckpt = 8
+callback = CustomCallback(model, suffix, out_dir, ckpt)
 
-model.fit(train_ds,epochs=totalEpochs, callbacks=[call_back])
-
-
+# Train the model
+model.fit(train_ds, epochs=total_epochs, callbacks=[callback])
