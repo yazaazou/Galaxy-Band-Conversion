@@ -54,7 +54,8 @@ generator_network = Generator(
     attention=False,
 ).get_generator()
 
-model = Img2Img(generator_network)
+#Set augment= True to turn on data augmentation at the top of the model
+model = Img2Img(generator_network,augment=False)
 
 model.compile(
     gen_G_optimizer=keras.optimizers.legacy.Adam(learning_rate=2e-4, beta_1=0.5),
