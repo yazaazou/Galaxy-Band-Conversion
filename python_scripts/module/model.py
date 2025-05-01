@@ -34,7 +34,7 @@ class AttentionBlock(layers.Layer):
 
     Args:
         units: Number of units in the dense layers.
-        groups: Number of groups to be used for GroupNormalization layer.
+        groups: Number of groups to be used for Groupalization layer.
     """
 
     def __init__(self, units, groups=-1, **kwargs):
@@ -42,9 +42,9 @@ class AttentionBlock(layers.Layer):
         self.units = units
         self.groups = groups
         seed = np.random.randint(0, 1000000)
-        self.kernel_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02, seed=seed)
+        self.kernel_init = keras.initializers.Randomal(mean=0.0, stddev=0.02, seed=seed)
 
-        self.norm = GNorm(groups=groups)
+        self. = GNorm(groups=groups)
         self.query = layers.Dense(units, kernel_initializer=self.kernel_init)
         self.key = layers.Dense(units, kernel_initializer=self.kernel_init)
         self.value = layers.Dense(units, kernel_initializer=self.kernel_init)
@@ -213,9 +213,18 @@ class Generator:
         return model
 
 class Img2Img(keras.Model):
-    def __init__(self, generator_G):
+    
+    def __init__(self,generator_G,augment=False):
         super().__init__()
         self.gen_G = generator_G
+        
+        self.augment= augment
+        self.data_augmentation = keras.Sequential([
+              layers.RandomFlip("horizontal"),
+              layers.RandomRotation((-0.2, 0.2),fill_mode='constant'),
+              layers.GaussianNoise(0.015)
+          ])
+
 
     def compile(
         self,
@@ -233,11 +242,28 @@ class Img2Img(keras.Model):
         return (arr + 1.0) / 2.0
 
     def train_step(self, batch_data):
-        inputs = [batch_data[:, :-1]]
-        target = batch_data[:, -1]
+
+        if self.augment:
+            x  = batch_data[:,0]
+            y  = batch_data[:,1]
+            z  = batch_data[:,2]
+
+            conc = tf.concat([x,y,z], axis=-1)
+            
+            aug = self.data_augmentation(conc,training=True)
+
+            input_1  = aug[:,:,:,0:1]
+            input_2  = aug[:,:,:,1:2]
+            target  = aug[:,:,:,2:]
+        
+        else:
+            input_1  = batch_data[:,0]
+            input_2  = batch_data[:,1]
+            target  = batch_data[:,2]
+        
 
         with tf.GradientTape(persistent=True) as tape:
-            fake = self.gen_G(inputs, training=True)
+            fake = self.gen_G([input_1,input_2], training=True)
 
             # Generator adversarial loss
             gen_G_loss = self.generator_loss_fn(target, fake)
