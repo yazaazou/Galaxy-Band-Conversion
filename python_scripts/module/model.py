@@ -42,9 +42,9 @@ class AttentionBlock(layers.Layer):
         self.units = units
         self.groups = groups
         seed = np.random.randint(0, 1000000)
-        self.kernel_init = keras.initializers.Randomal(mean=0.0, stddev=0.02, seed=seed)
+        self.kernel_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02, seed=seed)
 
-        self. = GNorm(groups=groups)
+        self.norm = GNorm(groups=groups)
         self.query = layers.Dense(units, kernel_initializer=self.kernel_init)
         self.key = layers.Dense(units, kernel_initializer=self.kernel_init)
         self.value = layers.Dense(units, kernel_initializer=self.kernel_init)
