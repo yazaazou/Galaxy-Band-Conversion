@@ -60,7 +60,7 @@ model = Img2Img(generator_network,augment=False)
 model.compile(
     gen_G_optimizer=keras.optimizers.legacy.Adam(learning_rate=2e-4, beta_1=0.5),
     gen_loss_fn=generator_loss_fn,
-    metric=keras.metrics.Mean(name="mean", dtype=None),
+    metrics=keras.metrics.Mean(name="mean", dtype=None),
 )
 
 # Save every 8 epochs
@@ -77,7 +77,7 @@ test_ids = np.load("test_ids.npy")
 
 # Get images
 test_files = illus.get_files(test_ids)
-test_arr = illus.get_test_data(train_files)
+test_arr = illus.get_test_data(test_files)
 
 val = Validation(test_arr)
 
