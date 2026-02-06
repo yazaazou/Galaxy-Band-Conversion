@@ -7,3 +7,5 @@ Please specify the suffix in 'main.py', otherwise it will remain as 'replace_ME'
 Before running any of the above, you must download the desired training data. To do that, please run the shell scripts corresponding to the desired bands in the 'illustris_shell_scripts' file.
 
 Training logs and saved models are available as well as is the 8-model ensemble used for uncertainty quantification.
+
+The final published paper can be found at: https://iopscience.iop.org/article/10.3847/1538-4357/add695
